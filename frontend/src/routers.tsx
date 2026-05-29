@@ -1,8 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
-import { additionRoutes } from "./modules/addition/routers/addition.router";
-import { multiplicationRoutes } from "./modules/multiplication/routers/multiplication.router";
 import { authRoutes } from "./modules/auth/routers/auth.router";
+import { forecastRoutes } from "./modules/forecast/routers/forecast.router";
+import { safePlaceRoutes } from "./modules/safe-place/routers/safe-place.router";
+import { survivorRoutes } from "./modules/survivor/routers/survivor.router";
+import { rescueRoutes } from "./modules/rescue/routers/rescue.router";
 
 const mainRouter = createBrowserRouter([
   {
@@ -11,8 +13,10 @@ const mainRouter = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/login" replace /> },
       ...authRoutes,
-      ...additionRoutes,
-      ...multiplicationRoutes,
+      ...forecastRoutes,
+      ...safePlaceRoutes,
+      ...survivorRoutes,
+      ...rescueRoutes,
     ],
   },
 ]);

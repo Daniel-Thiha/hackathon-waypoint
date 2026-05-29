@@ -19,19 +19,3 @@ model User {
   role      String
   createdAt DateTime @default(now())
 }
-
-model MultiplicationRecord {
-  id        Int      @id @default(autoincrement())
-  a         Float
-  b         Float
-  result    Float
-  createdAt DateTime @default(now())
-}
-
-model AdditionRecord {
-  id        Int      @id @default(autoincrement())
-  a         Float
-  b         Float
-  result    Float
-  createdAt DateTime @default(now())
-}
