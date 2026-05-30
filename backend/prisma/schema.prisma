@@ -1,90 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  role      String   // "Admin" | "RescueTeam"
-  createdAt DateTime @default(now())
-}
-
-model FloodZone {
-  id          Int      @id @default(autoincrement())
-  title       String
-  severity    String   // "low" | "medium" | "high"
-  lat         Float
-  lng         Float
-  radius      Int      @default(1000) // meters
-  description String?
-  adminId     Int      // User.id of the Admin who published it
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
 model SafePlace {
-  id           Int      @id @default(autoincrement())
-  name         String
-  description  String?
-  lat          Float
-  lng          Float
-  capacity     Int
-  currentCount Int      @default(0)
-  hasFood      Boolean  @default(false)
-  hasWater     Boolean  @default(false)
-  supplies     String?  // JSON: { item: string; scheduledAt: string }[]
-  adminId      Int      // User.id of the Admin who created it
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  Int                  @id @default(autoincrement())
+  name                String
+  latitude            Float
+  longitude           Float
+  capacity            Int
+  currentOccupants    Int                  @default(0)
+  facilities          String               
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  supplies            SupplyDistribution[] 
 }
 
-model SurvivorRegistration {
-  id          Int      @id @default(autoincrement())
-  referenceId String   @unique // e.g. "WP-2026-00001"
-  name        String
-  phone       String?
-  lat         Float    // survivor's current location
-  lng         Float
-  safePlaceId Int      // SafePlace.id they registered to
-  createdAt   DateTime @default(now())
-}
-
-model SosRequest {
-  id                Int      @id @default(autoincrement())
-  survivorName      String
-  phone             String?
-  lat               Float    // survivor's location at time of SOS
-  lng               Float
-  lastKnownLat      Float?   // updated while live location is shared
-  lastKnownLng      Float?
-  notes             String?
-  safePlaceId       Int?     // SafePlace.id they want to reach
-  status            String   @default("pending") // "pending" | "assigned" | "completed"
-  assignedRescuerId Int?     // User.id of the RescueTeam member assigned
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
-
-model RescueMission {
-  id           Int       @id @default(autoincrement())
-  sosRequestId Int       @unique // SosRequest.id
-  rescuerId    Int       // User.id of the RescueTeam member
-  status       String    @default("active") // "active" | "completed"
-  startedAt    DateTime  @default(now())
-  completedAt  DateTime?
-}
-
-model RescueTeamStatus {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique // User.id of the RescueTeam member
-  isAvailable Boolean  @default(true)
-  lat         Float?   // current GPS position
-  lng         Float?
-  updatedAt   DateTime @updatedAt
+model SupplyDistribution {
+  id             Int       @id @default(autoincrement())
+  safePlaceId    Int
+  safePlace      SafePlace @relation(fields: [safePlaceId], references: [id], onDelete: Cascade)
+  supplyType     String    
+  distributionAt DateTime  
+  quantity       String    
+  description    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
