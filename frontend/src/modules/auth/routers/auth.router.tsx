@@ -30,7 +30,7 @@ export const authRoutes = [
   {
     path: "rescue",
     element: (
-      <ProtectedRoute roles={["RescueTeam", "Volunteer"]}>
+      <ProtectedRoute roles={["RescueTeam"]}>
         <RescueDashboard />
       </ProtectedRoute>
     ),

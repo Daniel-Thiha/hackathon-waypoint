@@ -45,7 +45,8 @@ export function MapLegend() {
   const map = useMap();
 
   useEffect(() => {
-    const control = L.control({ position: "topright" });
+    type ControlFactory = (opts: L.ControlOptions) => L.Control;
+    const control = (L.control as unknown as ControlFactory)({ position: "topright" });
 
     control.onAdd = () => {
       const isMobile = window.innerWidth < 768;

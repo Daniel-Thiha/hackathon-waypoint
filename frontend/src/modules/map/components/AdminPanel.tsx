@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { AlertTriangle, Clock, Shield, Users, Plus, Trash2, MapPin, X, Check } from "lucide-react";
-import { getPendingRescuers, approveRescuer } from "../../auth/apis/auth.api";
-import type { PendingRescuer } from "../../auth/types/auth.types";
+import { useState } from "react";
+import { AlertTriangle, Clock, Shield, Users, Plus, Trash2, MapPin, X } from "lucide-react";
 import type { FloodZone, FloodSeverity } from "../../forecast/types/forecast.types";
 import type { SafePlace } from "../../safe-place/types/safe-place.types";
 import type { SosRequest } from "../../survivor/types/survivor.types";
@@ -10,7 +8,7 @@ import { createFloodZone, deleteFloodZone } from "../../forecast/apis/forecast.a
 import { createSafePlace, deleteSafePlace, updateSafePlace } from "../../safe-place/apis/safe-place.api";
 import { useMapContext } from "../contexts/MapContext";
 
-type AdminTab = "overview" | "forecasts" | "safe-places" | "supplies" | "teams";
+type AdminTab = "overview" | "forecasts" | "safe-places" | "supplies";
 type FormView = "create-forecast" | "create-safe-place" | "create-supply" | null;
 
 const SEVERITY_STYLE: Record<FloodSeverity, { badge: string; label: string }> = {
@@ -46,24 +44,6 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
   const { startPickingLocation, cancelMapAction, mapMode } = useMapContext();
   const [tab, setTab] = useState<AdminTab>("overview");
   const [formView, setFormView] = useState<FormView>(null);
-  const [pendingRescuers, setPendingRescuers] = useState<PendingRescuer[]>([]);
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
-
-  const loadPending = useCallback(async () => {
-    try { setPendingRescuers(await getPendingRescuers()); } catch { /* ignore */ }
-  }, []);
-
-  useEffect(() => { loadPending(); }, [loadPending]);
-
-  const handleRescuerAction = async (id: number, action: "approve" | "reject") => {
-    setActionLoadingId(id);
-    try {
-      await approveRescuer(id, action);
-      setPendingRescuers((prev) => prev.filter((r) => r.id !== id));
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
 
   const criticalAlerts = floodZones.filter((z) => z.severity === "high").length;
   const pendingSos = sosRequests.filter((s) => s.status === "pending").length;
@@ -287,7 +267,7 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
         <StatCard icon={<AlertTriangle className="w-4 h-4 text-white" />} bg="bg-red-500"
           label="Critical Alerts" value={criticalAlerts} sub="Active warnings" />
         <StatCard icon={<Clock className="w-4 h-4 text-white" />} bg="bg-orange-500"
-          label="Pending" value={pendingSos} sub="Awaiting rescue" />
+          label="Pending SOS" value={pendingSos} sub="Awaiting rescue" />
         <StatCard icon={<Shield className="w-4 h-4 text-white" />} bg="bg-green-500"
           label="Safe Places" value={safePlaces.length} sub={`${totalOccupied}/${totalCapacity} occupied`} />
         <StatCard icon={<Users className="w-4 h-4 text-white" />} bg="bg-blue-500"
@@ -296,17 +276,12 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-        {(["overview", "forecasts", "safe-places", "supplies", "teams"] as AdminTab[]).map((t) => (
+        {(["overview", "forecasts", "safe-places", "supplies"] as AdminTab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`relative flex-1 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors ${
+            className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors ${
               tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}>
             {t === "safe-places" ? "Places" : t.charAt(0).toUpperCase() + t.slice(1)}
-            {t === "teams" && pendingRescuers.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {pendingRescuers.length}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -407,73 +382,6 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* ── Teams tab ─────────────────────────────────────────────────────── */}
-      {tab === "teams" && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-700">Pending Applications</p>
-            {pendingRescuers.length > 0 && (
-              <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                {pendingRescuers.length}
-              </span>
-            )}
-          </div>
-          {pendingRescuers.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">No pending applications</p>
-          ) : (
-            pendingRescuers.map((r) => (
-              <div key={r.id} className="border border-gray-100 rounded-2xl p-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">{r.name ?? r.username}</p>
-                    <p className="text-xs text-gray-400">@{r.username}</p>
-                    <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      r.rescuerType === "GovernmentTeam" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                    }`}>
-                      {r.rescuerType === "GovernmentTeam" ? "Government" : "Private"}
-                    </span>
-                  </div>
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => handleRescuerAction(r.id, "approve")}
-                      disabled={actionLoadingId === r.id}
-                      className="w-8 h-8 bg-green-100 hover:bg-green-500 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 group"
-                      title="Approve"
-                    >
-                      <Check className="w-4 h-4 text-green-600 group-hover:text-white transition-colors" />
-                    </button>
-                    <button
-                      onClick={() => handleRescuerAction(r.id, "reject")}
-                      disabled={actionLoadingId === r.id}
-                      className="w-8 h-8 bg-red-100 hover:bg-red-500 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 group"
-                      title="Reject"
-                    >
-                      <X className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Active Teams</p>
-            {teamStatuses.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">No active teams</p>
-            ) : (
-              teamStatuses.map((t) => (
-                <div key={t.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-sm text-gray-700">Team #{t.userId}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.isAvailable ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                    {t.isAvailable ? "Available" : "On Mission"}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
         </div>
       )}
 

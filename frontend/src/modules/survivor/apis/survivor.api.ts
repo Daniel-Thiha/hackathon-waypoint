@@ -4,6 +4,7 @@ import type {
   CreateRegistrationInput,
   SosRequest,
   CreateSosInput,
+  SosStatus,
 } from "../types/survivor.types";
 
 // ── Registration ─────────────────────────────────────────────────────────────

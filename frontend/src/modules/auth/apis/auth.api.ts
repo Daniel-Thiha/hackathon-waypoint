@@ -1,5 +1,5 @@
 import api from "../../../api";
-import type { AuthUser, RegisterInput, PendingRescuer } from "../types/auth.types";
+import type { AuthUser, RegisterInput } from "../types/auth.types";
 
 export async function login(username: string, password: string): Promise<AuthUser> {
   const res = await api.post<{ user: AuthUser }>("/auth/login", { username, password });
@@ -15,20 +15,15 @@ export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
 
-export async function getMe(): Promise<AuthUser | null> {
-  try {
-    const res = await api.get<{ user: AuthUser }>("/auth/me");
-    return res.data.user;
-  } catch {
-    return null;
-  }
-}
+// Deduplicates concurrent calls so React StrictMode's double-effect only fires one request
+let getMeInflight: Promise<AuthUser | null> | null = null;
 
-export async function getPendingRescuers(): Promise<PendingRescuer[]> {
-  const res = await api.get<{ rescuers: PendingRescuer[] }>("/auth/pending");
-  return res.data.rescuers;
-}
-
-export async function approveRescuer(id: number, action: "approve" | "reject"): Promise<void> {
-  await api.patch(`/auth/rescuers/${id}`, { action });
+export function getMe(): Promise<AuthUser | null> {
+  if (getMeInflight) return getMeInflight;
+  getMeInflight = api
+    .get<{ user: AuthUser }>("/auth/me")
+    .then((res) => res.data.user)
+    .catch((): AuthUser | null => null)
+    .finally(() => { getMeInflight = null; });
+  return getMeInflight;
 }

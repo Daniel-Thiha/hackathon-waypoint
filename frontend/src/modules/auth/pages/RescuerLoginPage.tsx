@@ -70,7 +70,7 @@ const RescuerLoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) navigate("/map", { replace: true });
+    if (!authLoading && user && user.role !== "Admin") navigate("/rescue", { replace: true });
   }, [user, authLoading, navigate]);
 
   const handleLogin = async () => {
@@ -83,11 +83,11 @@ const RescuerLoginPage = () => {
     try {
       const loggedInUser = await login(username.trim(), password);
       if (loggedInUser.role === "Admin") {
-        setError("This login is for rescue teams and volunteers only.");
+        setError("This login is for rescue teams only.");
         return;
       }
       setUser(loggedInUser);
-      navigate("/map", { replace: true });
+      navigate("/rescue", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
       setError(msg.includes("Invalid credentials") ? "Incorrect username or password." : msg);

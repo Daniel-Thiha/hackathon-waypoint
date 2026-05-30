@@ -71,7 +71,7 @@ const RescuerAuthPage = () => {
             </div>
             <div>
               <p className="font-bold text-gray-900 text-lg">Rescuer Portal</p>
-              <p className="text-gray-400 text-[13px]">Volunteer or Official Team</p>
+              <p className="text-gray-400 text-[13px]">Rescuer Portal</p>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ const RescuerAuthPage = () => {
             </div>
             <div className="flex-1 text-left">
               <p className="font-bold text-gray-900 text-[14px]">Sign Up</p>
-              <p className="text-gray-500 text-[12px] mt-0.5">Register as volunteer or rescue team</p>
+              <p className="text-gray-500 text-[12px] mt-0.5">Create a new rescuer account</p>
             </div>
             <ArrowRightIcon className="w-4 h-4 text-gray-300 group-hover:text-orange-500 transition-colors flex-shrink-0" />
           </button>

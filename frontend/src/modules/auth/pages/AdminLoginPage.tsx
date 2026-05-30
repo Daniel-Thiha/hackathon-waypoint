@@ -66,7 +66,7 @@ const AdminLoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) navigate("/map", { replace: true });
+    if (!authLoading && user?.role === "Admin") navigate("/admin", { replace: true });
   }, [user, authLoading, navigate]);
 
   const handleLogin = async () => {
@@ -83,7 +83,7 @@ const AdminLoginPage = () => {
         return;
       }
       setUser(loggedInUser);
-      navigate("/map", { replace: true });
+      navigate("/admin", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
       setError(msg.includes("Invalid credentials") ? "Incorrect username or password." : msg);

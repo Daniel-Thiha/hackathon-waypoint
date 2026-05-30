@@ -92,7 +92,7 @@ const LoginPage = () => {
     setError("");
     setLoading(true);
     try {
-      const loggedInUser = await login(username.trim(), password, selectedRole);
+      const loggedInUser = await login(username.trim(), password);
       setUser(loggedInUser);
       navigate("/map", { replace: true });
     } catch (err: unknown) {

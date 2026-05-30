@@ -61,6 +61,35 @@ const LandingPage = () => {
           <p className="text-orange-500 text-[13px] mt-1">Available 24/7 — Flood Emergency Response</p>
         </div>
 
+        {/* Staff Portal divider */}
+        <div className="flex items-center gap-3 mt-1">
+          <div className="flex-1 h-px bg-orange-100" />
+          <span className="text-orange-300 text-[11px] font-medium">Staff Access</span>
+          <div className="flex-1 h-px bg-orange-100" />
+        </div>
+
+        {/* Staff Portal button */}
+        <button
+          onClick={() => navigate("/staff")}
+          className="w-full bg-white hover:bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 flex items-center justify-between text-gray-700 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-[13px] text-gray-800">Staff Portal</p>
+              <p className="text-[11px] text-gray-400">Admin &amp; Rescue Team Login</p>
+            </div>
+          </div>
+          <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
+
       </div>
 
       <p className="text-center text-gray-400 text-[11px] mt-5">

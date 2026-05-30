@@ -8,7 +8,8 @@ export function LocateMeControl() {
   const map = useMap();
 
   useEffect(() => {
-    const control = L.control({ position: "topleft" });
+    type ControlFactory = (opts: L.ControlOptions) => L.Control;
+    const control = (L.control as unknown as ControlFactory)({ position: "topleft" });
 
     control.onAdd = () => {
       const container = L.DomUtil.create("div", "leaflet-bar");

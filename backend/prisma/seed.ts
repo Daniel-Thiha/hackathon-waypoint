@@ -22,19 +22,19 @@ async function main() {
   const r1 = await prisma.user.upsert({
     where: { username: "rescue1" },
     update: {},
-    create: { username: "rescue1", password: rescuePw, role: "RescueTeam", name: "Alpha Emergency Team", rescuerType: "GovernmentTeam", status: "active" },
+    create: { username: "rescue1", password: rescuePw, role: "RescueTeam", name: "Alpha Emergency Team", status: "active" },
   });
 
   const r2 = await prisma.user.upsert({
     where: { username: "rescue2" },
     update: {},
-    create: { username: "rescue2", password: rescuePw, role: "RescueTeam", name: "Bangkok Rapid Response Unit", rescuerType: "PrivateTeam", status: "active" },
+    create: { username: "rescue2", password: rescuePw, role: "RescueTeam", name: "Bangkok Rapid Response Unit", status: "active" },
   });
 
   const r3 = await prisma.user.upsert({
     where: { username: "rescue3" },
     update: {},
-    create: { username: "rescue3", password: rescuePw, role: "RescueTeam", name: "Civil Defense Volunteers", rescuerType: "GovernmentTeam", status: "active" },
+    create: { username: "rescue3", password: rescuePw, role: "RescueTeam", name: "Civil Defense Volunteers", status: "active" },
   });
 
   console.log(`✓ Users: admin / rescue1 / rescue2 / rescue3`);

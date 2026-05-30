@@ -5,6 +5,10 @@ export async function getAllSafePlaces() {
   return prisma.safePlace.findMany({ orderBy: { createdAt: "desc" } });
 }
 
+export async function listSafePlaces() {
+  return prisma.safePlace.findMany({ orderBy: { name: "asc" } });
+}
+
 export async function getSafePlaceById(id: number) {
   return prisma.safePlace.findUnique({ where: { id } });
 }
