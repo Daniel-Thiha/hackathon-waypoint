@@ -19,6 +19,7 @@ model FloodZone {
   id          Int      @id @default(autoincrement())
   title       String
   severity    String   // "low" | "medium" | "high"
+  floodType   String?  // "flash" | "river" | "coastal" | "urban"
   lat         Float
   lng         Float
   radius      Int      @default(1000) // meters
