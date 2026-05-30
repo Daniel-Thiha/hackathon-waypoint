@@ -8,11 +8,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  role      String   // "Admin" | "RescueTeam"
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  password    String
+  role        String   // "Admin" | "Volunteer" | "RescueTeam"
+  name        String?  // display name (volunteer) or org name (official team)
+  rescuerType String?  // "PrivateTeam" | "GovernmentTeam" — only for RescueTeam role
+  status      String   @default("active") // "active" | "pending" | "rejected"
+  createdAt   DateTime @default(now())
 }
 
 model FloodZone {
@@ -78,6 +81,15 @@ model RescueMission {
   status       String    @default("active") // "active" | "completed"
   startedAt    DateTime  @default(now())
   completedAt  DateTime?
+}
+
+model ActiveLocation {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @unique
+  role      String   // "Survivor" | "Volunteer"
+  lat       Float
+  lng       Float
+  updatedAt DateTime @updatedAt
 }
 
 model RescueTeamStatus {

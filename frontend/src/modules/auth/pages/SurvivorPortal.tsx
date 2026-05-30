@@ -40,10 +40,10 @@ const SurvivorPortal = () => {
           </div>
 
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/")}
             className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-3 rounded-2xl text-sm transition-colors cursor-pointer"
           >
-            ← Back to Login
+            ← Back
           </button>
         </div>
 

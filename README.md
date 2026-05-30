@@ -1,13 +1,10 @@
 # CSC105-Hackathon-G11-Waypoint-FloodAid
 
-## Group Information
+## Assigned Feature
 
 | Student  ID |        Student  Name        | GitHub Username |Feature|
 |:-:|-|:-:|:-:|
 | 68130500840 |      Thiha Phone Thaw       |  Daniel-Thiha   | Survivor self-segistration & SOS |
-| 68130500844 |     Ye Htet Maung Maung     |     YeHtetMM    | Rescue dispatch with path-finder |
-| 68130500857 |   Chatdanai Denis Smolman   |    DenniTrea    | Flood Forecast |
-| 68130500870 |     SIRISAK KOTKHANGPHU     |      ballDp     | Safe Place Management |
 
 ---
 
@@ -110,6 +107,64 @@ When flooding hits, victims struggle to find safe places, rescuers search blindl
 ---
 
 ## Run
+
+### Prerequisites
+- Node.js 18+
+- npm
+
+### 1 — Install dependencies
+
+```bash
+# Backend
+cd backend
+npm install
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+```
+
+### 2 — Configure the backend environment
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+The defaults in `.env.example` work out of the box for local development — no edits needed.
+
+### 3 — Set up the database and seed demo data
+
+```bash
+cd backend
+npx prisma migrate deploy   # creates dev.db and applies schema
+npx prisma db seed          # adds flood zones, shelters, rescue teams, and admin user
+```
+
+**Demo credentials** (created by the seed):
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Rescue Team | `rescue1` | `rescue123` |
+| Rescue Team | `rescue2` | `rescue123` |
+| Rescue Team | `rescue3` | `rescue123` |
+
+Survivors access the map directly — no login required.
+
+### 4 — Start the servers
+
+```bash
+# Terminal 1 — backend (http://localhost:3000)
+cd backend
+npm run dev
+
+# Terminal 2 — frontend (http://localhost:5173)
+cd frontend
+npm run dev
+```
+
+Open **http://localhost:517-** in your browser.
 
 ---
 

@@ -9,6 +9,7 @@ const ROLE_CONFIG: Record<
 > = {
   Admin: { label: "Admin", bg: "bg-blue-500", Icon: Shield },
   RescueTeam: { label: "Rescue Team", bg: "bg-orange-500", Icon: Truck },
+  Volunteer: { label: "Volunteer", bg: "bg-green-500", Icon: Truck },
   Survivor: { label: "Survivor", bg: "bg-red-500", Icon: User },
 };
 
@@ -21,10 +22,10 @@ export function MapControls() {
 
   const handleExit = async () => {
     if (viewerRole === "Survivor") {
-      navigate("/login");
+      navigate("/");
     } else {
       await logout();
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
     }
   };
 
