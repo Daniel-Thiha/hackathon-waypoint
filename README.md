@@ -111,6 +111,90 @@ When flooding hits, victims struggle to find safe places, rescuers search blindl
 
 ## Run
 
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+---
+
+### 1. Backend
+
+```bash
+cd backend
+```
+
+Copy the example env and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+`.env` should contain:
+
+```env
+DATABASE_URL="file:./dev.db"
+ALLOW_ORIGIN=http://localhost:5173
+PORT=3000
+JWT_SECRET=any-random-secret
+```
+
+Install dependencies, run migrations, and seed the database:
+
+```bash
+npm install
+npx prisma migrate dev
+npx prisma generate
+npx prisma db seed
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Backend runs at `http://localhost:3000`.
+
+---
+
+### 2. Frontend
+
+Open a second terminal:
+
+```bash
+cd frontend
+```
+
+Create an env file:
+
+```bash
+echo "VITE_API_URL=http://localhost:3000" > .env
+```
+
+Install dependencies and start:
+
+```bash
+npm install
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`.
+
+---
+
+### 3. Using the Rescue Feature
+
+Open `http://localhost:5173/login` and log in with the seeded rescue team account:
+
+| Field    | Value        |
+|----------|--------------|
+| Username | `rescue`     |
+| Password | `rescue123`  |
+| Role     | `RescueTeam` |
+
+After login you are redirected to the live map at `/map`. The left panel shows incoming SOS requests. Red circles on the map are survivors awaiting rescue. Click **Accept & Navigate** on any SOS to begin a mission — the map draws a route from your position to the survivor. Click **Mission Complete** when you arrive.
+
 ---
 
 ## API Reference
