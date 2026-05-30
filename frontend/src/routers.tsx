@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import { authRoutes } from "./modules/auth/routers/auth.router";
 import { mapRoutes } from "./modules/map/routers/map.router";
@@ -12,7 +12,6 @@ const mainRouter = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
       ...authRoutes,
       ...mapRoutes,
       ...forecastRoutes,

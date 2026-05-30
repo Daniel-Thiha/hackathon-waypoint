@@ -8,6 +8,7 @@ export interface AuthRequest extends Request {
   user?: { userId: number; username: string; role: UserRole };
 }
 
+
 export function requireAuth(
   req: AuthRequest,
   _res: Response,

@@ -1,16 +1,13 @@
 import api from "../../../api";
-import type { AuthUser } from "../types/auth.types";
+import type { AuthUser, RegisterInput, PendingRescuer } from "../types/auth.types";
 
-export async function login(
-  username: string,
-  password: string,
-  role: string
-): Promise<AuthUser> {
-  const res = await api.post<{ user: AuthUser }>("/auth/login", {
-    username,
-    password,
-    role,
-  });
+export async function login(username: string, password: string): Promise<AuthUser> {
+  const res = await api.post<{ user: AuthUser }>("/auth/login", { username, password });
+  return res.data.user;
+}
+
+export async function register(input: RegisterInput): Promise<AuthUser> {
+  const res = await api.post<{ user: AuthUser }>("/auth/register", input);
   return res.data.user;
 }
 
@@ -25,4 +22,13 @@ export async function getMe(): Promise<AuthUser | null> {
   } catch {
     return null;
   }
+}
+
+export async function getPendingRescuers(): Promise<PendingRescuer[]> {
+  const res = await api.get<{ rescuers: PendingRescuer[] }>("/auth/pending");
+  return res.data.rescuers;
+}
+
+export async function approveRescuer(id: number, action: "approve" | "reject"): Promise<void> {
+  await api.patch(`/auth/rescuers/${id}`, { action });
 }

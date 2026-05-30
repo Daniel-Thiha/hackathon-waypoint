@@ -9,7 +9,7 @@ import {
 import type { LatLng, MapBounds } from "../types/map.types";
 import type { Map as LeafletMap } from "leaflet";
 
-export type MapViewerRole = "Admin" | "RescueTeam" | "Survivor";
+export type MapViewerRole = "Admin" | "RescueTeam" | "Volunteer" | "Survivor";
 export type MapMode = "idle" | "picking-location";
 
 interface MapContextValue {

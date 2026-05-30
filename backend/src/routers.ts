@@ -4,6 +4,7 @@ import forecastRouter from "./modules/forecast/routers/forecast.router";
 import safePlaceRouter from "./modules/safe-place/routers/safe-place.router";
 import survivorRouter from "./modules/survivor/routers/survivor.router";
 import rescueRouter from "./modules/rescue/routers/rescue.router";
+import activeLocationRouter from "./modules/active-location/routers/active-location.router";
 
 const mainRouter = Router();
 
@@ -12,5 +13,6 @@ mainRouter.use("/forecast", forecastRouter);
 mainRouter.use("/safe-place", safePlaceRouter);
 mainRouter.use("/survivor", survivorRouter);
 mainRouter.use("/rescue", rescueRouter);
+mainRouter.use("/active-locations", activeLocationRouter);
 
 export default mainRouter;
