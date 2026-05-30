@@ -80,7 +80,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(user.role === "Admin" ? "/admin" : "/rescue", { replace: true });
+      navigate("/map", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
@@ -94,9 +94,7 @@ const LoginPage = () => {
     try {
       const loggedInUser = await login(username.trim(), password, selectedRole);
       setUser(loggedInUser);
-      navigate(loggedInUser.role === "Admin" ? "/admin" : "/rescue", {
-        replace: true,
-      });
+      navigate("/map", { replace: true });
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Login failed. Please try again.";
@@ -136,7 +134,7 @@ const LoginPage = () => {
           </div>
 
           <button
-            onClick={() => navigate("/survivor")}
+            onClick={() => navigate("/map")}
             className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 rounded-2xl px-4 py-4 flex items-center gap-3 text-white transition-colors cursor-pointer"
           >
             <div className="bg-orange-600/50 rounded-xl p-2.5 flex-shrink-0">
