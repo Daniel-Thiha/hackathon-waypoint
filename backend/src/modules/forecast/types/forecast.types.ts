@@ -1,21 +1,25 @@
-export type FloodSeverity = "low" | "medium" | "high";
+export type Severity = "low" | "medium" | "high";
+export type FloodSeverity = Severity;
+export type FloodType = "flash" | "river" | "coastal" | "urban";
 
 export interface FloodZone {
   id: number;
   title: string;
-  severity: FloodSeverity;
+  severity: Severity;
+  floodType: FloodType | null;
   lat: number;
   lng: number;
   radius: number;
   description: string | null;
   adminId: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateFloodZoneInput {
   title: string;
-  severity: FloodSeverity;
+  severity: Severity;
+  floodType?: FloodType;
   lat: number;
   lng: number;
   radius: number;
@@ -24,9 +28,10 @@ export interface CreateFloodZoneInput {
 
 export interface UpdateFloodZoneInput {
   title?: string;
-  severity?: FloodSeverity;
+  severity?: Severity;
+  floodType?: FloodType | null;
   lat?: number;
   lng?: number;
   radius?: number;
-  description?: string;
+  description?: string | null;
 }

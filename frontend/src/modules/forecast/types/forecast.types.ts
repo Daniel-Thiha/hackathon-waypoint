@@ -1,9 +1,12 @@
-export type FloodSeverity = "low" | "medium" | "high";
+export type Severity = "low" | "medium" | "high";
+export type FloodSeverity = Severity;
+export type FloodType = "flash" | "river" | "coastal" | "urban";
 
 export interface FloodZone {
   id: number;
   title: string;
-  severity: FloodSeverity;
+  severity: Severity;
+  floodType: FloodType | null;
   lat: number;
   lng: number;
   radius: number;
@@ -15,7 +18,8 @@ export interface FloodZone {
 
 export interface CreateFloodZoneInput {
   title: string;
-  severity: FloodSeverity;
+  severity: Severity;
+  floodType?: FloodType;
   lat: number;
   lng: number;
   radius: number;

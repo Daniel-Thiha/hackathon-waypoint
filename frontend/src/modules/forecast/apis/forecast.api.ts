@@ -14,3 +14,11 @@ export async function createFloodZone(input: CreateFloodZoneInput): Promise<Floo
 export async function deleteFloodZone(id: number): Promise<void> {
   await api.delete(`/forecast/${id}`);
 }
+
+export async function updateFloodZone(
+  id: number,
+  input: Partial<CreateFloodZoneInput>
+): Promise<FloodZone> {
+  const res = await api.put<{ zone: FloodZone }>(`/forecast/${id}`, input);
+  return res.data.zone;
+}

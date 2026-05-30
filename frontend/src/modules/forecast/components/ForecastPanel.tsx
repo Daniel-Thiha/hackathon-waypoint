@@ -35,7 +35,7 @@ export function ForecastPanel({ zones, onRefresh }: ForecastPanelProps) {
           <div key={z.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
             <div>
               <p className="text-sm font-medium text-gray-800">{z.title}</p>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${SEVERITY_BADGE[z.severity]}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${SEVERITY_BADGE[z.severity as FloodSeverity]}`}>
                 {z.severity}
               </span>
             </div>

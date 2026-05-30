@@ -2,11 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../../../middlewares/auth.middleware";
 import { validateCreateFloodZone, validateUpdateFloodZone } from "../schemas/forecast.schema";
 import {
-  getAllFloodZones,
-  getFloodZoneById,
   createFloodZone,
   updateFloodZone,
   deleteFloodZone,
+  findFloodZoneById,
+  getAllFloodZones,
 } from "../models/forecast.model";
 
 export async function list(_req: Request, res: Response, next: NextFunction) {
@@ -18,7 +18,7 @@ export async function list(_req: Request, res: Response, next: NextFunction) {
 
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
-    const zone = await getFloodZoneById(Number(req.params.id));
+    const zone = await findFloodZoneById(Number(req.params.id));
     if (!zone) throw Object.assign(new Error("Flood zone not found"), { status: 404 });
     res.json(zone);
   } catch (err) { next(err); }

@@ -7,6 +7,7 @@ const SEVERITY: Record<FloodSeverity, { stroke: string; fill: string; fillOpacit
   high:   { stroke: "#991B1B", fill: "#EF4444", fillOpacity: 0.40, weight: 3   },
 };
 
+
 interface ForecastLayerProps {
   zones: FloodZone[];
 }

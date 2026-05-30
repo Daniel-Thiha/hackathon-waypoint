@@ -5,18 +5,29 @@ export async function getAllFloodZones() {
   return prisma.floodZone.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-export async function getFloodZoneById(id: number) {
-  return prisma.floodZone.findUnique({ where: { id } });
+export function createFloodZone(input: CreateFloodZoneInput, adminId: number) {
+  return prisma.floodZone.create({
+    data: {
+      title: input.title,
+      severity: input.severity,
+      floodType: input.floodType ?? null,
+      lat: input.lat,
+      lng: input.lng,
+      radius: input.radius,
+      description: input.description ?? null,
+      adminId,
+    },
+  });
 }
 
-export async function createFloodZone(input: CreateFloodZoneInput, adminId: number) {
-  return prisma.floodZone.create({ data: { ...input, adminId } });
-}
-
-export async function updateFloodZone(id: number, input: UpdateFloodZoneInput) {
+export function updateFloodZone(id: number, input: UpdateFloodZoneInput) {
   return prisma.floodZone.update({ where: { id }, data: input });
 }
 
-export async function deleteFloodZone(id: number) {
+export function deleteFloodZone(id: number) {
   return prisma.floodZone.delete({ where: { id } });
+}
+
+export function findFloodZoneById(id: number) {
+  return prisma.floodZone.findUnique({ where: { id } });
 }
