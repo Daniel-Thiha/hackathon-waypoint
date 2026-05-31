@@ -85,7 +85,8 @@ const ROLE_CONFIG: Record<ActiveRole, {
   RescueTeam: { color: "#2563EB", svg: RESCUE_SVG,    label: "Rescue Team" },
 };
 
-const ROLES: ActiveRole[] = ["Survivor", "Volunteer", "RescueTeam"];
+// Survivors are shown exclusively via SOS pins — exclude them from active-location badges
+const ROLES: ActiveRole[] = ["Volunteer", "RescueTeam"];
 
 // ── Per-role cluster groups ───────────────────────────────────────────────────
 
@@ -140,11 +141,13 @@ function PerRoleClusters({ locations, sessionId, authLoading }: PerRoleClustersP
       .forEach((loc) => {
         const cfg = ROLE_CONFIG[loc.role];
         if (!cfg) return;
+        const group = groups[loc.role];
+        if (!group) return;
         const marker = L.marker([loc.lat, loc.lng], {
           icon: badgePin(cfg.color, cfg.svg),
         });
         marker.bindPopup(`<strong style="font-size:13px">${cfg.label}</strong>`);
-        groups[loc.role].addLayer(marker);
+        group.addLayer(marker);
       });
   }, [locations, sessionId, authLoading]);
 

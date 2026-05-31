@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Map, List, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MapProvider } from "../contexts/MapContext";
@@ -13,6 +13,13 @@ import { SafePlaceLayer } from "../../safe-place/components/SafePlaceLayer";
 import { listSafePlaces } from "../../safe-place/apis/safe-place.api";
 import type { SafePlace } from "../../safe-place/types/safe-place.types";
 
+import { Polyline } from "react-leaflet";
+import { fetchWalkingRoute } from "../../rescue/utils/routing";
+import type { LatLng } from "../types/map.types";
+import { SOSLayer } from "../../survivor/components/SOSLayer";
+import { listSosRequests } from "../../survivor/apis/survivor.api";
+import type { SosRequest } from "../../survivor/types/survivor.types";
+
 import { SurvivorPanel } from "../../survivor/components/SurvivorPanel";
 
 import { RescueTeamLayer } from "../../rescue/components/RescueTeamLayer";
@@ -22,27 +29,64 @@ import type { RescueTeamStatus } from "../../rescue/types/rescue.types";
 import { ActiveLocationLayer } from "../components/ActiveLocationLayer";
 import { getActiveLocations } from "../../active-location/apis/active-location.api";
 import type { ActiveLocation } from "../../active-location/types/active-location.types";
-import { useMyLocation } from "../../../hooks/useMyLocation";
+
+const GEO_OPTS: PositionOptions = { enableHighAccuracy: false, maximumAge: 30000, timeout: 10000 };
 
 export default function MapPage() {
   const navigate = useNavigate();
-  const { myLocation, sessionId } = useMyLocation("Survivor", undefined, true);
+
+  // Local-only GPS — starts immediately on mount, never writes to the backend
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [registeredPlace, setRegisteredPlace] = useState<SafePlace | null>(null);
+  const [survivorRoute, setSurvivorRoute] = useState<LatLng[] | null>(null);
+  const [survivorSosId, setSurvivorSosId] = useState<number | null>(null);
   const [mobileView, setMobileView] = useState<"panel" | "map">("panel");
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => setMyLocation({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      undefined,
+      GEO_OPTS,
+    );
+    const watchId = navigator.geolocation.watchPosition(
+      (p) => setMyLocation({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      undefined,
+      GEO_OPTS,
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  useEffect(() => {
+    if (!registeredPlace) { setSurvivorRoute(null); return; }
+    if (!myLocation) return; // GPS not ready yet — keep existing route, retry when it arrives
+    let cancelled = false;
+    fetchWalkingRoute(myLocation, registeredPlace)
+      .then(r => { if (!cancelled) setSurvivorRoute(r); })
+      .catch(() => {
+        // Straight-line fallback so the path always shows something
+        if (!cancelled) setSurvivorRoute([myLocation, { lat: registeredPlace.lat, lng: registeredPlace.lng }]);
+      });
+    return () => { cancelled = true; };
+  }, [myLocation, registeredPlace]);
 
   const [floodZones, setFloodZones] = useState<FloodZone[]>([]);
   const [safePlaces, setSafePlaces] = useState<SafePlace[]>([]);
+  const [sosRequests, setSosRequests] = useState<SosRequest[]>([]);
   const [teamStatuses, setTeamStatuses] = useState<RescueTeamStatus[]>([]);
   const [activeLocations, setActiveLocations] = useState<ActiveLocation[]>([]);
 
   const refresh = useCallback(async () => {
-    const [zones, places, teams, locs] = await Promise.all([
+    const [zones, places, sos, teams, locs] = await Promise.all([
       listFloodZones().catch(() => [] as FloodZone[]),
       listSafePlaces().catch(() => [] as SafePlace[]),
+      listSosRequests().catch(() => [] as SosRequest[]),
       listTeamStatuses().catch(() => [] as RescueTeamStatus[]),
       getActiveLocations().catch(() => [] as ActiveLocation[]),
     ]);
     setFloodZones(zones);
     setSafePlaces(places);
+    setSosRequests(sos);
     setTeamStatuses(teams);
     setActiveLocations(locs);
   }, []);
@@ -100,6 +144,8 @@ export default function MapPage() {
               teamStatuses={teamStatuses}
               locationShared={myLocation !== null}
               onSwitchToMap={() => setMobileView("map")}
+              onRegistered={(place) => setRegisteredPlace(place)}
+              onActiveSosChange={(id) => setSurvivorSosId(id)}
             />
             {/* Extra bottom padding on mobile so content isn't hidden behind the toggle */}
             <div className="h-20 flex-shrink-0 md:hidden" />
@@ -113,15 +159,34 @@ export default function MapPage() {
             <BaseMap>
               <ForecastLayer zones={floodZones} />
               <SafePlaceLayer places={safePlaces} />
-              <RescueTeamLayer
-                teamStatuses={teamStatuses}
-                sosRequests={[]}
-                activeRescuerId={null}
-              />
+              <SOSLayer sosRequests={sosRequests} />
+              {(() => {
+                const activeSos = survivorSosId ? sosRequests.find(s => s.id === survivorSosId) ?? null : null;
+                const assignedRescuerId = activeSos?.status === "assigned" ? (activeSos.assignedRescuerId ?? null) : null;
+                const beingRescued = assignedRescuerId !== null;
+                return (
+                  <>
+                    {/* Show registered-place route only when not actively being rescued */}
+                    {!beingRescued && survivorRoute && survivorRoute.length > 1 && (
+                      <Polyline
+                        positions={survivorRoute.map(c => [c.lat, c.lng] as [number, number])}
+                        pathOptions={{ color: "#16A34A", weight: 4, dashArray: "10 8", lineCap: "round", lineJoin: "round", opacity: 0.85 }}
+                      />
+                    )}
+                    <RescueTeamLayer
+                      teamStatuses={teamStatuses}
+                      sosRequests={activeSos ? [activeSos] : []}
+                      safePlaces={safePlaces}
+                      activeRescuerId={assignedRescuerId}
+                      activeSosRequestId={survivorSosId}
+                    />
+                  </>
+                );
+              })()}
               <ActiveLocationLayer
                 locations={activeLocations}
                 myLocation={myLocation}
-                sessionId={sessionId}
+                sessionId={null}
                 authLoading={false}
               />
             </BaseMap>

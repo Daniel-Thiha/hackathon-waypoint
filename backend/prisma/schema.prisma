@@ -61,6 +61,7 @@ model SurvivorRegistration {
 
 model SosRequest {
   id                Int      @id @default(autoincrement())
+  deviceId          String?  @unique // browser fingerprint — prevents duplicate SOS from same device
   survivorName      String
   phone             String?
   lat               Float    // survivor's location at time of SOS

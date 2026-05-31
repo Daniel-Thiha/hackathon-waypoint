@@ -36,6 +36,7 @@ export interface SosRequest {
 }
 
 export interface CreateSosInput {
+  deviceId?: string;
   survivorName: string;
   phone?: string;
   lat: number;

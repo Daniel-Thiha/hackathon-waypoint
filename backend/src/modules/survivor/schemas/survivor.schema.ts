@@ -24,6 +24,7 @@ export function validateCreateSos(body: unknown): CreateSosInput {
   if (typeof b.lat !== "number" || typeof b.lng !== "number")
     throw Object.assign(new Error("lat and lng must be numbers"), { status: 400 });
   return {
+    deviceId: typeof b.deviceId === "string" && b.deviceId.trim() ? b.deviceId.trim() : undefined,
     survivorName: (b.survivorName as string).trim(),
     phone: typeof b.phone === "string" ? b.phone.trim() : undefined,
     lat: b.lat,

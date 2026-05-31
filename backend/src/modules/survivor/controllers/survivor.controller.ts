@@ -10,6 +10,8 @@ import {
   createSosRequest,
   getAllSosRequests,
   getSosRequestById,
+  getSosRequestByDeviceId,
+  updateSosSafePlaceId,
   updateSosLocation,
 } from "../models/survivor.model";
 
@@ -63,6 +65,28 @@ export async function getSosStatusPublic(req: Request, res: Response, next: Next
     const sos = await getSosRequestById(Number(req.params.id));
     if (!sos) throw Object.assign(new Error("SOS request not found"), { status: 404 });
     res.json({ id: sos.id, status: sos.status, assignedRescuerId: sos.assignedRescuerId });
+  } catch (err) { next(err); }
+}
+
+// Public — survivor looks up their own SOS by deviceId to restore session state
+// Returns only id + status (no PII exposed)
+export async function getSosByDevice(req: Request, res: Response, next: NextFunction) {
+  try {
+    const deviceId = String(req.query.deviceId ?? "").trim();
+    if (!deviceId) { res.json(null); return; }
+    const sos = await getSosRequestByDeviceId(deviceId);
+    if (!sos) { res.json(null); return; }
+    res.json({ id: sos.id, status: sos.status });
+  } catch (err) { next(err); }
+}
+
+export async function setSosShelter(req: Request, res: Response, next: NextFunction) {
+  try {
+    const sosId = Number(req.params.id);
+    const safePlaceId = Number((req.body as Record<string, unknown>).safePlaceId);
+    if (!safePlaceId) throw Object.assign(new Error("safePlaceId is required"), { status: 400 });
+    const sos = await updateSosSafePlaceId(sosId, safePlaceId);
+    res.json(sos);
   } catch (err) { next(err); }
 }
 

@@ -10,7 +10,7 @@ interface RescuePanelProps {
   sosRequests: SosRequest[];
   teamStatuses: RescueTeamStatus[];
   onRefresh: () => void;
-  onActiveMissionChange: (rescuerId: number | null) => void;
+  onActiveMissionChange: (rescuerId: number | null, sosRequestId: number | null) => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -27,6 +27,7 @@ export function RescuePanel({ sosRequests, teamStatuses, onRefresh, onActiveMiss
 
   const [activeMission, setActiveMission] = useState<RescueMission | null>(null);
   const [accepting, setAccepting] = useState<number | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
   const watchRef = useRef<number | null>(null);
 
@@ -36,11 +37,14 @@ export function RescuePanel({ sosRequests, teamStatuses, onRefresh, onActiveMiss
   const completedCount = sosRequests.filter((s) => s.status === "completed").length;
 
   useEffect(() => {
-    listActiveMissions().then((missions) => {
-      const mine = missions.find((m) => m.rescuerId === user?.id && m.status === "active");
-      setActiveMission(mine ?? null);
-      onActiveMissionChange(mine ? user!.id : null);
-    });
+    if (!user) return;
+    listActiveMissions()
+      .then((missions) => {
+        const mine = missions.find((m) => m.rescuerId === user.id && m.status === "active");
+        setActiveMission(mine ?? null);
+        onActiveMissionChange(mine ? user.id : null, mine ? mine.sosRequestId : null);
+      })
+      .catch(() => {});
   }, [sosRequests, user, onActiveMissionChange]);
 
   useEffect(() => {
@@ -59,10 +63,14 @@ export function RescuePanel({ sosRequests, teamStatuses, onRefresh, onActiveMiss
 
   async function handleAccept(sosRequestId: number) {
     setAccepting(sosRequestId);
+    setAcceptError(null);
     try {
       const mission = await acceptSos(sosRequestId);
       setActiveMission(mission);
-      onActiveMissionChange(user!.id);
+      onActiveMissionChange(user?.id ?? null, mission.sosRequestId);
+      onRefresh();
+    } catch {
+      setAcceptError("Could not accept — this request may have already been taken. Refreshing…");
       onRefresh();
     } finally { setAccepting(null); }
   }
@@ -74,7 +82,7 @@ export function RescuePanel({ sosRequests, teamStatuses, onRefresh, onActiveMiss
       await completeMission(activeMission.id);
       await setAvailability(true);
       setActiveMission(null);
-      onActiveMissionChange(null);
+      onActiveMissionChange(null, null);
       onRefresh();
     } finally { setCompleting(false); }
   }
@@ -162,6 +170,12 @@ export function RescuePanel({ sosRequests, teamStatuses, onRefresh, onActiveMiss
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
             Emergency Requests ({pending.length})
           </p>
+          {acceptError && (
+            <div className="mb-2 flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+              <p className="text-xs text-red-600">{acceptError}</p>
+              <button onClick={() => setAcceptError(null)} className="text-red-400 hover:text-red-600 ml-2 text-sm cursor-pointer leading-none">✕</button>
+            </div>
+          )}
           {pending.length === 0 ? (
             <div className="text-center py-6">
               <p className="text-sm text-gray-400">No pending SOS requests</p>

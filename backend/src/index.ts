@@ -11,9 +11,14 @@ const PORT = process.env.PORT ?? 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = (process.env.ALLOW_ORIGIN ?? "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: [process.env.ALLOW_ORIGIN!],
+    origin: allowedOrigins,
     credentials: true,
   })
 );

@@ -39,6 +39,7 @@ const RescueDashboard = () => {
 
   const [mobileView, setMobileView] = useState<"panel" | "map">("panel");
   const [activeRescuerId, setActiveRescuerId] = useState<number | null>(null);
+  const [activeSosRequestId, setActiveSosRequestId] = useState<number | null>(null);
 
   const [floodZones, setFloodZones] = useState<FloodZone[]>([]);
   const [safePlaces, setSafePlaces] = useState<SafePlace[]>([]);
@@ -119,7 +120,10 @@ const RescueDashboard = () => {
               sosRequests={sosRequests}
               teamStatuses={teamStatuses}
               onRefresh={refresh}
-              onActiveMissionChange={setActiveRescuerId}
+              onActiveMissionChange={(rescuerId, sosRequestId) => {
+                setActiveRescuerId(rescuerId);
+                setActiveSosRequestId(sosRequestId);
+              }}
             />
             <div className="h-20 flex-shrink-0 md:hidden" />
           </div>
@@ -138,6 +142,7 @@ const RescueDashboard = () => {
                 sosRequests={sosRequests}
                 safePlaces={safePlaces}
                 activeRescuerId={activeRescuerId}
+                activeSosRequestId={activeSosRequestId}
               />
               <ActiveLocationLayer
                 locations={activeLocations}

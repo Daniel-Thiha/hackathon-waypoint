@@ -22,10 +22,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMe().then((u) => {
-      setUser(u);
-      setLoading(false);
-    });
+    getMe()
+      .then((u) => setUser(u))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   async function logout() {

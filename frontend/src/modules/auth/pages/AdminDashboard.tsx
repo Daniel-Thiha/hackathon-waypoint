@@ -122,7 +122,7 @@ const AdminDashboard = () => {
             <BaseMap>
               <ForecastLayer zones={floodZones} />
               <SafePlaceLayer places={safePlaces} />
-              <SOSLayer sosRequests={sosRequests} />
+              <SOSLayer sosRequests={sosRequests} />}
               <RescueTeamLayer
                 teamStatuses={teamStatuses}
                 sosRequests={sosRequests}

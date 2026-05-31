@@ -10,8 +10,15 @@ function generateReferenceId(): string {
 }
 
 export async function createRegistration(input: CreateRegistrationInput) {
-  return prisma.survivorRegistration.create({
-    data: { ...input, referenceId: generateReferenceId() },
+  return prisma.$transaction(async (tx) => {
+    const reg = await tx.survivorRegistration.create({
+      data: { ...input, referenceId: generateReferenceId() },
+    });
+    await tx.safePlace.update({
+      where: { id: input.safePlaceId },
+      data: { currentCount: { increment: 1 } },
+    });
+    return reg;
   });
 }
 
@@ -22,7 +29,21 @@ export async function getRegistrationByReferenceId(referenceId: string) {
 // ── SOS ──────────────────────────────────────────────────────────────────────
 
 export async function createSosRequest(input: CreateSosInput) {
-  return prisma.sosRequest.create({ data: input });
+  if (!input.deviceId) {
+    return prisma.sosRequest.create({ data: input });
+  }
+  // Upsert so a device that already has a pending/assigned SOS gets its location updated
+  // instead of accumulating duplicates.
+  const { deviceId, ...rest } = input;
+  return prisma.sosRequest.upsert({
+    where: { deviceId },
+    update: { lat: rest.lat, lng: rest.lng, notes: rest.notes, safePlaceId: rest.safePlaceId ?? null, status: "pending", updatedAt: new Date() },
+    create: { deviceId, ...rest },
+  });
+}
+
+export async function getSosRequestByDeviceId(deviceId: string) {
+  return prisma.sosRequest.findUnique({ where: { deviceId } });
 }
 
 export async function getAllSosRequests() {
@@ -31,6 +52,10 @@ export async function getAllSosRequests() {
 
 export async function getSosRequestById(id: number) {
   return prisma.sosRequest.findUnique({ where: { id } });
+}
+
+export async function updateSosSafePlaceId(id: number, safePlaceId: number) {
+  return prisma.sosRequest.update({ where: { id }, data: { safePlaceId } });
 }
 
 export async function updateSosLocation(id: number, input: UpdateLocationInput) {

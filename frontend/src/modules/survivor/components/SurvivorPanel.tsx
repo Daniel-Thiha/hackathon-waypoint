@@ -4,14 +4,14 @@ import type { SafePlace } from "../../safe-place/types/safe-place.types";
 import type { FloodZone } from "../../forecast/types/forecast.types";
 import type { RescueTeamStatus } from "../../rescue/types/rescue.types";
 import type { SurvivorRegistration, SosStatus } from "../types/survivor.types";
-import { registerSurvivor, createSosRequest, updateSurvivorLocation, getSosStatus } from "../apis/survivor.api";
+import { registerSurvivor, createSosRequest, updateSurvivorLocation, getSosStatus, getSosByDeviceId, setSosShelter } from "../apis/survivor.api";
 import { useMapContext } from "../../map/contexts/MapContext";
 
 type SeverityKey = "low" | "medium" | "high";
 const SEVERITY_BADGE: Record<SeverityKey, { label: string; cls: string }> = {
-  low:    { label: "Low",      cls: "bg-yellow-100 text-yellow-700" },
-  medium: { label: "Medium",   cls: "bg-orange-100 text-orange-700" },
-  high:   { label: "Critical", cls: "bg-red-100 text-red-600" },
+  low:    { label: "< 0.5 m",    cls: "bg-yellow-100 text-yellow-700" },
+  medium: { label: "0.5–1.5 m",  cls: "bg-orange-100 text-orange-700" },
+  high:   { label: "> 1.5 m",    cls: "bg-red-100 text-red-600" },
 };
 
 interface SurvivorPanelProps {
@@ -20,12 +20,20 @@ interface SurvivorPanelProps {
   teamStatuses: RescueTeamStatus[];
   locationShared?: boolean;
   onSwitchToMap?: () => void;
+  onRegistered?: (place: SafePlace) => void;
+  onActiveSosChange?: (sosId: number | null) => void;
 }
 
 type Screen = "main" | "register-form" | "sos-form";
 
 function validateName(v: string) {
   if (!v.trim()) return "Name is required";
+  if (v.trim().length < 2) return "Name must be at least 2 characters";
+  return "";
+}
+
+function validateFullName(v: string) {
+  if (!v.trim()) return "Full name is required";
   if (v.trim().length < 2) return "Name must be at least 2 characters";
   return "";
 }
@@ -38,7 +46,7 @@ function validatePhone(v: string) {
   return "";
 }
 
-export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationShared = false, onSwitchToMap }: SurvivorPanelProps) {
+export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationShared = false, onSwitchToMap, onRegistered, onActiveSosChange }: SurvivorPanelProps) {
   const { mapInstance } = useMapContext();
 
   function flyToPlace(place: SafePlace) {
@@ -49,6 +57,15 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
     }, 150);
   }
 
+  const deviceId = (() => {
+    const key = "waypoint_device_id";
+    let id = localStorage.getItem(key);
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem(key, id); }
+    return id;
+  })();
+
+  const REG_KEY = `waypoint_reg_${deviceId}`;
+
   const [screen, setScreen] = useState<Screen>("main");
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [registration, setRegistration] = useState<SurvivorRegistration | null>(null);
@@ -56,6 +73,7 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
   const [activeSosId, setActiveSosId] = useState<number | null>(null);
   const [sosStatus, setSosStatus] = useState<SosStatus>("pending");
   const [saving, setSaving] = useState(false);
+  const [restoring, setRestoring] = useState(true);
 
   // Registration form
   const [regName, setRegName] = useState("");
@@ -78,6 +96,35 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
       { enableHighAccuracy: false, timeout: 10000 }
     );
   }, []);
+
+  // Restore session from backend using deviceId (runs once on mount)
+  useEffect(() => {
+    getSosByDeviceId(deviceId)
+      .then((sos) => {
+        if (sos) {
+          setActiveSosId(sos.id);
+          setSosStatus(sos.status);
+          onActiveSosChange?.(sos.id);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRestoring(false));
+  }, [deviceId]);
+
+  // Restore shelter registration from localStorage reference once safePlaces are loaded
+  useEffect(() => {
+    if (registration || safePlaces.length === 0) return;
+    try {
+      const stored = localStorage.getItem(REG_KEY);
+      if (!stored) return;
+      const { safePlaceId, referenceId } = JSON.parse(stored) as { safePlaceId: number; referenceId: string };
+      const place = safePlaces.find((p) => p.id === safePlaceId);
+      if (!place) return;
+      setSelectedPlace(place);
+      setRegistration({ id: 0, referenceId, name: "", phone: null, lat: 0, lng: 0, safePlaceId, createdAt: "" });
+      onRegistered?.(place);
+    } catch {}
+  }, [safePlaces, REG_KEY, registration, onRegistered]);
 
   // Stream live location while SOS is active and pending/assigned
   useEffect(() => {
@@ -114,14 +161,19 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
     setSaving(true);
     try {
       const reg = await registerSurvivor({ name: regName.trim(), phone: regPhone.trim() || undefined, lat: loc.lat, lng: loc.lng, safePlaceId: selectedPlace.id });
+      localStorage.setItem(REG_KEY, JSON.stringify({ safePlaceId: selectedPlace.id, referenceId: reg.referenceId }));
+      // Link the active SOS to this shelter so rescue routing goes here, not nearest
+      if (activeSosId) await setSosShelter(activeSosId, selectedPlace.id).catch(() => {});
       setRegistration(reg);
+      onRegistered?.(selectedPlace);
+      onSwitchToMap?.();
       setScreen("main");
     } finally { setSaving(false); }
   }
 
   // ── SOS ───────────────────────────────────────────────────────────────────
   async function handleSendSos() {
-    const nameErr = validateName(sosName);
+    const nameErr = validateFullName(sosName);
     const phoneErr = validatePhone(sosPhone);
     if (nameErr || phoneErr) { setSosErrors({ name: nameErr || undefined, phone: phoneErr || undefined }); return; }
     setSosErrors({});
@@ -129,8 +181,9 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
     const loc = gps ?? { lat: 13.7563, lng: 100.5018 };
     setSaving(true);
     try {
-      const sos = await createSosRequest({ survivorName: sosName.trim(), phone: sosPhone.trim() || undefined, lat: loc.lat, lng: loc.lng, notes: sosNotes.trim() || undefined });
+      const sos = await createSosRequest({ deviceId, survivorName: sosName.trim(), phone: sosPhone.trim() || undefined, lat: loc.lat, lng: loc.lng, notes: sosNotes.trim() || undefined, safePlaceId: selectedPlace?.id });
       setActiveSosId(sos.id);
+      onActiveSosChange?.(sos.id);
       setSosStatus("pending");
       setScreen("main");
     } finally { setSaving(false); }
@@ -250,7 +303,7 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
           </div>
         )}
 
-        <button onClick={handleSendSos} disabled={sosName.trim().length < 2 || saving}
+        <button onClick={handleSendSos} disabled={!!validateFullName(sosName) || saving}
           className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-50 text-white font-bold py-4 rounded-2xl text-[15px] cursor-pointer transition-colors">
           {saving ? "Sending…" : "🚨 Send Emergency Request Now"}
         </button>
@@ -259,12 +312,24 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
     );
   }
 
+  // ── Restoring ─────────────────────────────────────────────────────────────
+  if (restoring) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3 text-gray-400">
+          <Loader className="w-6 h-6 animate-spin" />
+          <p className="text-sm">Restoring your session…</p>
+        </div>
+      </div>
+    );
+  }
+
   // ── Main view ─────────────────────────────────────────────────────────────
 
   // Status card config based on SOS state
   const statusCard = !activeSosId ? (
-    registration
-      ? { bg: "bg-green-50 border-green-200", iconBg: "bg-green-500", icon: <CheckCircle className="w-5 h-5 text-white" />, title: "You are Safe", titleCls: "text-green-700", sub: registration.name }
+    registration && selectedPlace
+      ? { bg: "bg-blue-50 border-blue-200", iconBg: "bg-blue-500", icon: <Navigation className="w-5 h-5 text-white" />, title: "Route to Safety", titleCls: "text-blue-700", sub: `Follow the route on the map to ${selectedPlace.name}, or request rescue below` }
       : { bg: "bg-blue-50 border-blue-200",  iconBg: "bg-blue-500",  icon: <MapPin className="w-5 h-5 text-white" />,       title: "Find Help Near You", titleCls: "text-blue-700",  sub: "Ready to assist you" }
   ) : sosStatus === "pending" ? {
     bg: "bg-amber-50 border-amber-200",
@@ -298,19 +363,19 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
         <p className="text-xs text-gray-400 mt-0.5">Emergency assistance and safe shelter</p>
       </div>
 
-      {/* Location sharing notice */}
+      {/* Location notice */}
       {locationShared ? (
-        <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 animate-pulse" />
-          <p className="text-xs text-green-700 leading-snug">
-            <strong>Your location is being shared</strong> with nearby rescue teams so they can find you.
+        <div className="flex items-center gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2.5">
+          <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 animate-pulse" />
+          <p className="text-xs text-blue-700 leading-snug">
+            <strong>Location active.</strong> Your position is shown as a blue dot on the map. Send an SOS call below if you need rescue.
           </p>
         </div>
       ) : (
         <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
           <MapPin className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           <p className="text-xs text-amber-700 leading-snug">
-            Allow location access so rescue teams can find you faster.
+            <strong>Enable location access</strong> so your position appears on the map and rescuers can reach you faster.
           </p>
         </div>
       )}
@@ -446,7 +511,7 @@ export function SurvivorPanel({ safePlaces, floodZones, teamStatuses, locationSh
                       className="p-1 bg-blue-50 hover:bg-blue-100 rounded-lg cursor-pointer">
                       <Navigation className="w-3.5 h-3.5 text-blue-600" />
                     </button>
-                    {!full && !registration && (
+                    {!full && !registration && !(activeSosId && sosStatus === "completed") && (
                       <button onClick={() => { setSelectedPlace(p); setScreen("register-form"); }}
                         className="flex items-center gap-0.5 text-xs bg-green-600 hover:bg-green-700 text-white px-2.5 py-1.5 rounded-lg cursor-pointer font-semibold">
                         Register <ChevronRight className="w-3 h-3" />

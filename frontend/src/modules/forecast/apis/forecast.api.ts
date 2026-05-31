@@ -19,6 +19,6 @@ export async function updateFloodZone(
   id: number,
   input: Partial<CreateFloodZoneInput>
 ): Promise<FloodZone> {
-  const res = await api.put<{ zone: FloodZone }>(`/forecast/${id}`, input);
-  return res.data.zone;
+  const res = await api.put<FloodZone>(`/forecast/${id}`, input);
+  return res.data;
 }

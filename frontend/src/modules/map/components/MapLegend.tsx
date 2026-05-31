@@ -8,15 +8,15 @@ const LEGEND_BODY = `
   </div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
     <div style="width:13px;height:13px;border-radius:50%;flex-shrink:0;border:2.5px solid #991B1B;background:rgba(239,68,68,.55);"></div>
-    <span>Critical Flooding</span>
+    <span>&gt; 1.5 m depth</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
     <div style="width:13px;height:13px;border-radius:50%;flex-shrink:0;border:2.5px solid #C2410C;background:rgba(249,115,22,.5);"></div>
-    <span>Moderate Flood</span>
+    <span>0.5 – 1.5 m depth</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
     <div style="width:13px;height:13px;border-radius:50%;flex-shrink:0;border:2px solid #B45309;background:rgba(252,211,77,.6);"></div>
-    <span>Flood Watch</span>
+    <span>&lt; 0.5 m depth</span>
   </div>
   <div style="border-top:1px solid #E5E7EB;padding-top:8px;">
     <div style="font-size:9.5px;font-weight:600;color:#9CA3AF;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;">
@@ -31,12 +31,11 @@ const LEGEND_BODY = `
       <span>Rescue Team</span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
-      <div style="width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#EF4444;border:1.5px solid white;box-shadow:0 0 0 2px rgba(239,68,68,.35);"></div>
-      <span>Survivor</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div style="width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#2563EB;border:1.5px solid white;box-shadow:0 0 0 3px rgba(37,99,235,.3);"></div>
-      <span>Your Location</span>
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="width:16px;height:16px;border-radius:50%;background:#DC2626;border:1.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:white;font-size:4.5px;font-weight:900;font-family:system-ui,sans-serif;letter-spacing:.3px;">SOS</div>
+        <div style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #DC2626;margin-top:-1px;"></div>
+      </div>
+      <span>SOS Emergency</span>
     </div>
   </div>
 `;

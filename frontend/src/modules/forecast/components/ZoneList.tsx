@@ -2,9 +2,9 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { FloodZone, Severity, FloodType } from "../types/forecast.types";
 
 const SEVERITY_BADGE: Record<Severity, { label: string; cls: string }> = {
-  low:    { label: "LOW",      cls: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
-  medium: { label: "MEDIUM",   cls: "bg-orange-100 text-orange-800 border border-orange-200" },
-  high:   { label: "CRITICAL", cls: "bg-red-100 text-red-700 border border-red-200" },
+  low:    { label: "< 0.5 m",     cls: "bg-yellow-100 text-yellow-800 border border-yellow-200" },
+  medium: { label: "0.5–1.5 m",   cls: "bg-orange-100 text-orange-800 border border-orange-200" },
+  high:   { label: "> 1.5 m",     cls: "bg-red-100 text-red-700 border border-red-200" },
 };
 
 const FLOOD_TYPE_LABEL: Record<FloodType, string> = {

@@ -43,6 +43,19 @@ export async function getSosStatus(id: number): Promise<{ id: number; status: So
   return res.data;
 }
 
+export async function getSosByDeviceId(
+  deviceId: string
+): Promise<{ id: number; status: SosStatus } | null> {
+  const res = await api.get<{ id: number; status: SosStatus } | null>(
+    `/survivor/sos/by-device?deviceId=${encodeURIComponent(deviceId)}`
+  );
+  return res.data;
+}
+
+export async function setSosShelter(sosId: number, safePlaceId: number): Promise<void> {
+  await api.patch(`/survivor/sos/${sosId}/shelter`, { safePlaceId });
+}
+
 export async function updateSurvivorLocation(
   sosId: number,
   lat: number,

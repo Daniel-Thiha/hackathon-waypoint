@@ -7,6 +7,8 @@ import {
   listSos,
   getSos,
   getSosStatusPublic,
+  getSosByDevice,
+  setSosShelter,
   updateLocation,
 } from "../controllers/survivor.controller";
 
@@ -18,9 +20,13 @@ survivorRouter.get("/register/:referenceId", getRegistration);
 survivorRouter.post("/sos", createSos);
 survivorRouter.get("/sos/:id/status", getSosStatusPublic); // status-only, no PII
 survivorRouter.patch("/sos/:id/location", updateLocation);
+survivorRouter.patch("/sos/:id/shelter", setSosShelter);
 
-// Staff only — Admin and RescueTeam see all SOS requests
-survivorRouter.get("/sos", requireAuth, requireRole("Admin", "RescueTeam"), listSos);
+// Public list — all roles (including unauthenticated survivors) see pins on the shared map
+survivorRouter.get("/sos", listSos);
+// Device session restore — returns only id+status, no PII (must be before /:id)
+survivorRouter.get("/sos/by-device", getSosByDevice);
+// Detail requires staff auth — contains full PII
 survivorRouter.get("/sos/:id", requireAuth, requireRole("Admin", "RescueTeam"), getSos);
 
 export default survivorRouter;

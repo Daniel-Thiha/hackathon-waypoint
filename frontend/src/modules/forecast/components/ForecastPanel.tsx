@@ -2,10 +2,10 @@ import { Layers, Trash2 } from "lucide-react";
 import type { FloodZone, FloodSeverity } from "../types/forecast.types";
 import { deleteFloodZone } from "../apis/forecast.api";
 
-const SEVERITY_BADGE: Record<FloodSeverity, string> = {
-  low:    "bg-amber-100 text-amber-700",
-  medium: "bg-orange-100 text-orange-700",
-  high:   "bg-red-100 text-red-700",
+const SEVERITY_BADGE: Record<FloodSeverity, { cls: string; label: string }> = {
+  low:    { cls: "bg-amber-100 text-amber-700",  label: "< 0.5 m"    },
+  medium: { cls: "bg-orange-100 text-orange-700", label: "0.5–1.5 m" },
+  high:   { cls: "bg-red-100 text-red-700",       label: "> 1.5 m"   },
 };
 
 interface ForecastPanelProps {
@@ -35,8 +35,8 @@ export function ForecastPanel({ zones, onRefresh }: ForecastPanelProps) {
           <div key={z.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
             <div>
               <p className="text-sm font-medium text-gray-800">{z.title}</p>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${SEVERITY_BADGE[z.severity as FloodSeverity]}`}>
-                {z.severity}
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_BADGE[z.severity as FloodSeverity].cls}`}>
+                {SEVERITY_BADGE[z.severity as FloodSeverity].label}
               </span>
             </div>
             <button

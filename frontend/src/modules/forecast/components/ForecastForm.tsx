@@ -80,9 +80,9 @@ export function ForecastForm({
           onChange={(e) => set({ severity: e.target.value as Severity })}
           className={`${INPUT} bg-white text-gray-800`}
         >
-          <option value="low">Low Severity</option>
-          <option value="medium">Medium Severity</option>
-          <option value="high">High Severity</option>
+          <option value="low">&lt; 0.5 m — Low</option>
+          <option value="medium">0.5 – 1.5 m — Moderate</option>
+          <option value="high">&gt; 1.5 m — Critical</option>
         </select>
 
         <select

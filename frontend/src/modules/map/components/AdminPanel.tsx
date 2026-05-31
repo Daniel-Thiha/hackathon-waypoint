@@ -10,11 +10,13 @@ import { useMapContext } from "../contexts/MapContext";
 
 type AdminTab = "overview" | "forecasts" | "safe-places" | "supplies";
 type FormView = "create-forecast" | "create-safe-place" | "create-supply" | null;
+type ActionError = { message: string } | null;
+type ConfirmState = { title: string; description: string; onConfirm: () => Promise<void> } | null;
 
 const SEVERITY_STYLE: Record<FloodSeverity, { badge: string; label: string }> = {
-  low:    { badge: "bg-yellow-100 text-yellow-700 border border-yellow-200", label: "Low" },
-  medium: { badge: "bg-orange-100 text-orange-700 border border-orange-200", label: "Medium" },
-  high:   { badge: "bg-red-100 text-red-600 border border-red-200",          label: "Critical" },
+  low:    { badge: "bg-yellow-100 text-yellow-700 border border-yellow-200", label: "< 0.5 m"    },
+  medium: { badge: "bg-orange-100 text-orange-700 border border-orange-200", label: "0.5–1.5 m"  },
+  high:   { badge: "bg-red-100 text-red-600 border border-red-200",          label: "> 1.5 m"    },
 };
 
 interface AdminPanelProps {
@@ -44,6 +46,9 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
   const { startPickingLocation, cancelMapAction, mapMode } = useMapContext();
   const [tab, setTab] = useState<AdminTab>("overview");
   const [formView, setFormView] = useState<FormView>(null);
+  const [actionError, setActionError] = useState<ActionError>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const criticalAlerts = floodZones.filter((z) => z.severity === "high").length;
   const pendingSos = sosRequests.filter((s) => s.status === "pending").length;
@@ -88,6 +93,13 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
   const [spCapacity, setSpCapacity] = useState("500");
   const [spDesc, setSpDesc] = useState("");
   const [spSaving, setSpSaving] = useState(false);
+
+  function handlePickForecastLocation() {
+    startPickingLocation((ll) => {
+      setFLat(ll.lat.toFixed(4));
+      setFLng(ll.lng.toFixed(4));
+    });
+  }
 
   function handlePickLocation() {
     startPickingLocation((ll) => {
@@ -142,6 +154,43 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
 
   const inputCls = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white";
 
+  // ── Delete confirm dialog ─────────────────────────────────────────────────
+  if (confirmState) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg w-full max-w-sm p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Trash2 className="w-5 h-5 text-red-500" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-base">{confirmState.title}</h3>
+          </div>
+          <p className="text-sm text-gray-500 leading-relaxed">{confirmState.description}</p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={async () => {
+                setConfirming(true);
+                try { await confirmState.onConfirm(); }
+                finally { setConfirming(false); setConfirmState(null); }
+              }}
+              disabled={confirming}
+              className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm cursor-pointer transition-colors"
+            >
+              {confirming ? "Deleting…" : "Delete"}
+            </button>
+            <button
+              onClick={() => setConfirmState(null)}
+              disabled={confirming}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl text-sm cursor-pointer transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Location pick overlay ─────────────────────────────────────────────────
   if (mapMode === "picking-location") {
     return (
@@ -171,11 +220,17 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
           <input type="number" step="0.0001" className={inputCls + " flex-1"} placeholder="Longitude" value={fLng} onChange={(e) => setFLng(e.target.value)} />
         </div>
         <select className={inputCls} value={fSeverity} onChange={(e) => setFSeverity(e.target.value as FloodSeverity)}>
-          <option value="low">Low Severity</option>
-          <option value="medium">Medium Severity</option>
-          <option value="high">High Severity</option>
+          <option value="low">&lt; 0.5 m — Low</option>
+          <option value="medium">0.5 – 1.5 m — Moderate</option>
+          <option value="high">&gt; 1.5 m — Critical</option>
         </select>
-        <input type="number" className={inputCls} placeholder="Radius (meters)" value={fRadius} onChange={(e) => setFRadius(e.target.value)} />
+        <div className="flex gap-2">
+          <input type="number" className={inputCls + " flex-1"} placeholder="Radius (meters)" value={fRadius} onChange={(e) => setFRadius(e.target.value)} />
+          <button onClick={handlePickForecastLocation}
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm cursor-pointer flex items-center gap-1.5 flex-shrink-0">
+            <MapPin className="w-4 h-4" /> Pick
+          </button>
+        </div>
         <textarea className={inputCls + " resize-none"} placeholder="Description of flood forecast" rows={3} value={fDesc} onChange={(e) => setFDesc(e.target.value)} />
         <div className="flex gap-2">
           <button onClick={handleCreateForecast} disabled={!fTitle.trim() || fSaving}
@@ -238,7 +293,9 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
           <option>Medical</option>
           <option>Other</option>
         </select>
-        <input type="datetime-local" className={inputCls} value={supDate} onChange={(e) => setSupDate(e.target.value)} />
+        <input type="datetime-local" className={inputCls} value={supDate}
+          min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+          onChange={(e) => setSupDate(e.target.value)} />
         <input className={inputCls} placeholder="Quantity (e.g. 500 meals, 1000 bottles)" value={supQty} onChange={(e) => setSupQty(e.target.value)} />
         <input className={inputCls} placeholder="Description" value={supDesc} onChange={(e) => setSupDesc(e.target.value)} />
         <div className="flex gap-2">
@@ -255,6 +312,12 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
   // ── Main dashboard ────────────────────────────────────────────────────────
   return (
     <div className="p-4 space-y-4">
+      {actionError && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+          <p className="text-xs text-red-600 font-medium">{actionError.message}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 ml-2 cursor-pointer text-sm leading-none">✕</button>
+        </div>
+      )}
       <div>
         <h2 className="text-xl font-bold text-gray-900">Admin Dashboard</h2>
         <p className="text-xs text-gray-400 mt-0.5">
@@ -332,8 +395,14 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
                   {z.description && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{z.description}</p>}
                   <p className="text-xs text-gray-400 mt-1">Radius: {z.radius}m · {new Date(z.createdAt).toLocaleDateString()}</p>
                 </div>
-                <button onClick={async () => { if (!confirm("Delete?")) return; await deleteFloodZone(z.id); onRefresh(); }}
-                  className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 cursor-pointer flex-shrink-0">
+                <button onClick={() => setConfirmState({
+                  title: "Delete Forecast",
+                  description: `Are you sure you want to delete "${z.title}"? This cannot be undone.`,
+                  onConfirm: async () => {
+                    try { await deleteFloodZone(z.id); onRefresh(); }
+                    catch { setActionError({ message: "Failed to delete forecast. Try again." }); }
+                  },
+                })} className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 cursor-pointer flex-shrink-0">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -365,8 +434,14 @@ export function AdminPanel({ floodZones, safePlaces, sosRequests, teamStatuses, 
                   <p className="text-sm font-bold text-gray-900">{p.name}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 font-medium">Capacity {p.currentCount}/{p.capacity}</span>
-                    <button onClick={async () => { if (!confirm("Delete?")) return; await deleteSafePlace(p.id); onRefresh(); }}
-                      className="p-1 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 cursor-pointer">
+                    <button onClick={() => setConfirmState({
+                      title: "Delete Safe Place",
+                      description: `Are you sure you want to delete "${p.name}"? This cannot be undone.`,
+                      onConfirm: async () => {
+                        try { await deleteSafePlace(p.id); onRefresh(); }
+                        catch { setActionError({ message: "Failed to delete safe place. Try again." }); }
+                      },
+                    })} className="p-1 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 cursor-pointer">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
